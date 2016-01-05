@@ -23,15 +23,6 @@ enum IndexType{
 };
 
 
-int convert(int argc, char* argv[]) {
-    if (argc < 3){
-        fprintf(stderr,"converter needs 3 arguments");
-        return -1;
-    }
-    convertVecToHDF5(argv[0], argv[1], argv[2]);
-    return 0;
-}
-
 void saveAsVec(Matrix<float> m, const char* fn){
     ofstream of;
     of.open(fn);
@@ -105,6 +96,7 @@ int run(int argc, char const * const argv[]) {
     }
     cout << endl;
     string filename;
+    string queryFilename;
 //    bool saveFiles = false;
 
     float radius = 0.4;
@@ -112,18 +104,17 @@ int run(int argc, char const * const argv[]) {
     int c;
     int knn = -1;
     int index_type = KDTREE;
-    int fold = 1;
 
 
     int dims=-1;
     int nclusters = -1;
     int size = -1;
-    while((c =  getopt(argc, const_cast<char * const * >(argv), "rk:y:f:c:s:d:r:i:q:n:")) != EOF){
+    while((c =  getopt(argc, const_cast<char * const * >(argv), "rk:y:c:s:d:r:i:q:n:")) != EOF){
         switch (c){
             case 'k': knn=atoi(optarg); break;
             case 'y': index_type=atoi(optarg); break;
-            case 'f': fold=atoi(optarg); break;
             case 'i': filename = optarg; break;
+            case 'q': queryFilename = optarg; break;
             case 'n': indexName= optarg; break;
             case 'c': nclusters=atoi(optarg); break;
             case 's': size=atoi(optarg); break;
@@ -136,39 +127,35 @@ int run(int argc, char const * const argv[]) {
         }
     }
 
-    printf("parms, dim=%d, nclusters=%d, size=%d, knn=%d, radius=%f, filename=%s, fold=%d\n", dims, nclusters, size, knn, radius,filename.c_str(), fold);
+    printf("parms, dim=%d, nclusters=%d, size=%d, knn=%d, radius=%f, filename=%s, qfilename=%s\n",
+           dims, nclusters, size, knn, radius,filename.c_str(), queryFilename);
 
     Matrix<float> dataset;
     load_from_file(dataset, filename.c_str() , indexName);
+
+    Matrix<float> query;
+    load_from_file(query, queryFilename.c_str() , indexName);
 
     mstat stat(dataset.rows, dataset.cols, dataset.ptr());
     for (size_t j = 0; j < dataset.cols; ++j) {
         printf("coord,dim=%ld, mean=%f, variance=%f\n", j, stat[j]->getMean(), stat[j]->getVariance());
     }
 
-    for (int i = 1; i <= fold; ++i) {
-        printf("set,size=%ld, AverageVariance=%f, ", dataset.rows, stat.getAverageVariance());
-        string dir("/Users/parnell/workspace/data");
+    printf("set,size=%ld, AverageVariance=%f, ", dataset.rows, stat.getAverageVariance());
+    string dir("/Users/parnell/workspace/data");
 
-        srand(1);
-        stringstream qss;
-        qss << dir << "gaussian_query" << nclusters << "_" << dims << "_" << size << "." << fold <<".hdf5";
-//        const int numsteps = 10;
-//        float maxt = stat.getAverageVariance()*4;
-//        float stept = maxt / numsteps;
-        Matrix<float> query = generateQuery(dataset, 100);
-        saveAsVec(query, qss.str().c_str());
-        cout << "fold=" << i << " , ";
-        if (index_type == KDTREE){
-            if (knn > 0){
-                calcKNNDistCalculations(dataset, query, (size_t) knn);
-            } else{
-                calcRadiusDistCalculations(dataset, query, radius);
-            }
+    srand(1);
+    stringstream qss;
+    qss << dir << "gaussian_query" << nclusters << "_" << dims << "_" << size << "." <<".hdf5";
+    if (index_type == KDTREE){
+        if (knn > 0){
+            calcKNNDistCalculations(dataset, query, (size_t) knn);
+        } else{
+            calcRadiusDistCalculations(dataset, query, radius);
         }
-        printf("\n");
-        delete[] query.ptr();
     }
+    printf("\n");
+    delete[] query.ptr();
 
 
     delete[] dataset.ptr();
@@ -176,16 +163,8 @@ int run(int argc, char const * const argv[]) {
     return 0;
 }
 
-Matrix<float> generateQuery(Matrix<float> matrix, size_t querySize) {
-    vector<float>* pq = new vector<float>(querySize * matrix.cols);
-    for (int i = 0; i < querySize; ++i) {
-        float* pf = matrix[rand() % matrix.rows];
-        std::copy(pf, pf+matrix.cols, &(*pq)[i*matrix.cols]);
-    }
-    return Matrix<float> (&(*pq)[0], querySize, matrix.cols);
-}
-
 int main(int argc, char const * const argv[]) {
+
     stringstream ss;
 
     string dir("/Users/parnell/workspace/data");
@@ -199,7 +178,10 @@ int main(int argc, char const * const argv[]) {
     stringstream iss;
     iss << "-i" << ss.str();
 
-
+    if (argc < 3) {
+        fprintf(stderr, "need at least 2 arguments\n");
+        fprintf(stderr, "example:  -k3 -d5 -i/Users/parnell/workspace/data/gaussian_1_5_0.1_1000000.hdf5 -ngauss -f1 \n");
+    }
 
 
 //  argc=3; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian-20-10-1000000.txt", "/Users/parnell/workspace/data/gaussian-20-10-1000000.hdf5","gaussian"};
@@ -215,6 +197,6 @@ int main(int argc, char const * const argv[]) {
 //    argc = 2; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian_1_5_0.1_1000000.hdf5", "gauss"};
 
 //    return run(argc, fakeArgs);
-    if (argc)
+
     return run(argc, argv);
 }
