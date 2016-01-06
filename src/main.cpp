@@ -52,7 +52,7 @@ int calcKNNDistCalculations(const Matrix<float>& dataset,const Matrix<float>& qu
     index.distance_calcs=0;
     index.knnSearch(query, result_indices, dists, nn, SearchParams(-1));
 
-    cout << "Ending, queries="<<query.rows <<" ,totalcalcs=" << index.distance_calcs << ", avg=" << index.distance_calcs / query.rows << endl;
+    cout << "Ending KNN, knn=" << nn <<", queries="<<query.rows <<" ,totalcalcs=" << index.distance_calcs << ", avg=" << index.distance_calcs / query.rows << endl;
     /// cleanup
     delete[] result_indices.ptr();
     delete[] dists.ptr();
