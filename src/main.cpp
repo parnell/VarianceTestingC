@@ -42,7 +42,7 @@ void saveAsVec(Matrix<float> m, const char* fn){
 }
 
 struct IndexWrapper{
-    NNIndex* pindex;
+    NNIndex<L2<float>>* pindex;
     IndexType type;
     IndexWrapper() :pindex(0), type(UNKNOWN){ }
     void resetCalcs(){
@@ -74,7 +74,7 @@ int calcKNNDistCalculations(
         const Matrix<float>& dataset,
         const Matrix<float>& query,
         const size_t nn){
-    NNIndex *pindex = pwrap->pindex;
+    NNIndex<L2<float>> *pindex = pwrap->pindex;
 
     Matrix<int> result_indices(new int[query.rows*nn], query.rows, nn);
     Matrix<float> dists(new float[query.rows*nn], query.rows , nn); /// distances of the knn results
@@ -89,7 +89,7 @@ int calcKNNDistCalculations(
     size_t dc = pwrap->getCalcs();
 
 
-    printf("Ending KNN, buildtime=%ld, querytime=%ld, knn=%ld, queries=%ld, totalcalcs=%ld, avg=%f\n",
+    printf("Ending KNN, buildtime=%lld, querytime=%lld, knn=%ld, queries=%ld, totalcalcs=%ld, avg=%f\n",
            (end-start), (qend-end), nn, query.rows, dc, (float)dc / query.rows );
 
     /// cleanup
@@ -102,7 +102,7 @@ int calcRadiusDistCalculations(IndexWrapper* pwrap,
                                const Matrix<float>& dataset,
                                const Matrix<float>& query,
                                const float radius){
-    NNIndex *pindex = pwrap->pindex;
+    NNIndex<L2<float>> *pindex = pwrap->pindex;
 
     vector< vector<size_t> > result_indices;
     vector< vector<float> > dists;
@@ -121,7 +121,7 @@ int calcRadiusDistCalculations(IndexWrapper* pwrap,
         nresults += result_indices[i].size();
     }
     size_t dc = pwrap->getCalcs();
-    printf("buildtime=%ld, querytime=%ld, radius%f, queries=%ld, totalcalcs=%ld, avg=%f, size=%zu, avgresults=%f\n",
+    printf("buildtime=%lld, querytime=%lld, radius%f, queries=%ld, totalcalcs=%ld, avg=%f, size=%zu, avgresults=%f\n",
            (end - start),
            (qend - end),
            radius,
@@ -194,13 +194,13 @@ int run(int argc, char const * const argv[]) {
     qss << dir << "gaussian_query" << nclusters << "_" << dims << "_" << size << "." <<".hdf5";
     IndexWrapper* pwrap = new IndexWrapper();
     pwrap->type = index_type==KDTREE? KDTREE : LSH;
-    NNIndex* pindex;
+    NNIndex<L2<float> >* pindex;
     switch(pwrap->type){
         case KDTREE:
             pindex = new KDTreeIndex<L2<float>>(dataset, KDTreeIndexParams(1));
             break;
         case LSH:
-            pindex = new flann::LshIndex(dataset, flann::LinearIndexParams());
+            pindex = new flann::LshIndex<L2<float> >(dataset, flann::LinearIndexParams());
             break;
         default:
             break;
