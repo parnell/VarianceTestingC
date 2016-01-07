@@ -49,11 +49,11 @@ int calcKNNDistCalculations(const Matrix<float>& dataset,const Matrix<float>& qu
 
     index.buildIndex();
     // knn search 128 checks
-    flann::L2<float>.distance_calcs=0;
+    flann::L2<float>::distance_calcs=0;
     index.knnSearch(query, result_indices, dists, nn, SearchParams(-1));
 
-    size_t dc = flann::L2<float>.distance_calcs;
-    cout << "Ending KNN, knn=" << nn <<", queries="<<query.rows <<" ,totalcalcs=" << flann::L2<float>.distance_calcs << ", avg=" << index.distance_calcs / query.rows << endl;
+    size_t dc = flann::L2<float>::distance_calcs;
+    cout << "Ending KNN, knn=" << nn <<", queries="<<query.rows <<" ,totalcalcs=" << dc<< ", avg=" << (float)dc / query.rows << endl;
     /// cleanup
     delete[] result_indices.ptr();
     delete[] dists.ptr();
@@ -71,7 +71,6 @@ int calcRadiusDistCalculations(const Matrix<float>& dataset,const Matrix<float>&
 
     index.buildIndex();
     // knn search 128 checks
-    index.distance_calcs=0;
     flann::L2<float>::distance_calcs=0;
     index.radiusSearch(query, result_indices, dists, radius, SearchParams(-1));
 
@@ -79,11 +78,12 @@ int calcRadiusDistCalculations(const Matrix<float>& dataset,const Matrix<float>&
     for (size_t i = 0; i < result_indices.size(); ++i) {
         nresults += result_indices[i].size();
     }
+    size_t dc = flann::L2<float>::distance_calcs;
     printf("radius%f, queries=%ld, totalcalcs=%ld, avg=%f, size=%zu, avgresults=%f\n",
            radius,
            query.rows,
-           index.distance_calcs ,
-           (float) index.distance_calcs / query.rows,
+           dc ,
+           (float) dc/ query.rows,
            nresults ,
            (float) nresults/query.rows);
     return 0;
