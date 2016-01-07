@@ -89,8 +89,10 @@ int calcKNNDistCalculations(
     size_t dc = pwrap->getCalcs();
 
 
-    printf("Ending KNN, buildtime=%lld, querytime=%lld, knn=%ld, queries=%ld, totalcalcs=%ld, avg=%f\n",
-           (end-start), (qend-end), nn, query.rows, dc, (float)dc / query.rows );
+    printf("Ending KNN, buildtime=%f, querytime=%f, knn=%ld, queries=%ld, totalcalcs=%ld, avg=%f\n",
+           (end - start)/1000000,
+           (qend - end)/1000000,
+           nn, query.rows, dc, (float)dc / query.rows );
 
     /// cleanup
     delete[] result_indices.ptr();
@@ -121,9 +123,9 @@ int calcRadiusDistCalculations(IndexWrapper* pwrap,
         nresults += result_indices[i].size();
     }
     size_t dc = pwrap->getCalcs();
-    printf("buildtime=%lld, querytime=%lld, radius%f, queries=%ld, totalcalcs=%ld, avg=%f, size=%zu, avgresults=%f\n",
-           (end - start),
-           (qend - end),
+    printf("buildtime=%f, querytime=%f, radius%f, queries=%ld, totalcalcs=%ld, avg=%f, size=%zu, avgresults=%f\n",
+           (end - start)/1000000,
+           (qend - end)/1000000,
            radius,
            query.rows,
            dc ,
