@@ -49,10 +49,11 @@ int calcKNNDistCalculations(const Matrix<float>& dataset,const Matrix<float>& qu
 
     index.buildIndex();
     // knn search 128 checks
-    index.distance_calcs=0;
+    flann::L2<float>.distance_calcs=0;
     index.knnSearch(query, result_indices, dists, nn, SearchParams(-1));
 
-    cout << "Ending KNN, knn=" << nn <<", queries="<<query.rows <<" ,totalcalcs=" << index.distance_calcs << ", avg=" << index.distance_calcs / query.rows << endl;
+    size_t dc = flann::L2<float>.distance_calcs;
+    cout << "Ending KNN, knn=" << nn <<", queries="<<query.rows <<" ,totalcalcs=" << flann::L2<float>.distance_calcs << ", avg=" << index.distance_calcs / query.rows << endl;
     /// cleanup
     delete[] result_indices.ptr();
     delete[] dists.ptr();
