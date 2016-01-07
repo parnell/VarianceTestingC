@@ -129,7 +129,7 @@ int run(int argc, char const * const argv[]) {
     }
 
     printf("parms, dim=%d, nclusters=%d, size=%d, knn=%d, radius=%f, filename=%s, qfilename=%s\n",
-           dims, nclusters, size, knn, radius,filename.c_str(), queryFilename);
+           dims, nclusters, size, knn, radius,filename.c_str(), queryFilename.c_str());
 
     Matrix<float> dataset;
     load_from_file(dataset, filename.c_str() , indexName);
@@ -187,7 +187,10 @@ int main(int argc, char const * const argv[]) {
 
 //  argc=3; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian-20-10-1000000.txt", "/Users/parnell/workspace/data/gaussian-20-10-1000000.hdf5","gaussian"};
 //    argc=3; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian-1-10-1000000.vec", "/Users/parnell/workspace/data/gaussian-1-10-1000000.hdf5","gaussian"};
-//    argc=3; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian-1-1-1000000.vec", "/Users/parnell/workspace/data/gaussian-1-1-1000000.hdf5","gaussian"};
+//    argc=3; char const * const fakeArgs[] = {   "-i/Users/parnell/workspace/data/gaussian_1_5_0.4_1000000.hdf5",
+//                                    "-q/Users/parnell/workspace/data/gaussian_query_1_5_0.4_100.vec",
+//                                    "-ngaussian",
+//                                    "-r0.4"};
 //    return convert(argc, fakeArgs);
 //    argc = 6;  char const * const fakeArgs[] = {argv[0],"-k3", "-d5", iss.str().c_str(), "-ngauss", "-f1"};
 //    argc = 2; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian-1-10-1000000.hdf5", "gaussian"};
