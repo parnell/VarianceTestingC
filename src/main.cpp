@@ -14,10 +14,11 @@ Matrix<float> generateQuery(Matrix<float> matrix,size_t querySize);
 
 using namespace std;
 using namespace flann;
-
+using std::chrono::system_clock;
 
 
 enum IndexType{
+    UNKNOWN,
     KDTREE,
     LSH
 };
@@ -40,46 +41,89 @@ void saveAsVec(Matrix<float> m, const char* fn){
     of.close();
 }
 
-int calcKNNDistCalculations(const Matrix<float>& dataset,const Matrix<float>& query, const size_t nn){
+struct IndexWrapper{
+    NNIndex* pindex;
+    IndexType type;
+    IndexWrapper() :pindex(0), type(UNKNOWN){ }
+    void resetCalcs(){
+        switch(type) {
+            case KDTREE:
+                flann::L2<float>::distance_calcs=0;
+                break;
+            case LSH:
+                break;
+            default:
+                break;
+        }
+    }
+    size_t getCalcs(){
+        switch(type){
+            case KDTREE:
+                return flann::L2<float>::distance_calcs;
+            case LSH:
+                break;
+            default:
+                break;
+        }
+        return -1;
+    }
+};
+
+int calcKNNDistCalculations(
+        IndexWrapper* pwrap,
+        const Matrix<float>& dataset,
+        const Matrix<float>& query,
+        const size_t nn){
+    NNIndex *pindex = pwrap->pindex;
 
     Matrix<int> result_indices(new int[query.rows*nn], query.rows, nn);
     Matrix<float> dists(new float[query.rows*nn], query.rows , nn); /// distances of the knn results
 
-    KDTreeIndex<L2<float>> index(dataset, KDTreeIndexParams(1));
+    system_clock::time_point start = system_clock::now();
+    pindex->buildIndex();
+    system_clock::time_point end = system_clock::now();
 
-    index.buildIndex();
-    // knn search 128 checks
-    flann::L2<float>::distance_calcs=0;
-    index.knnSearch(query, result_indices, dists, nn, SearchParams(-1));
+    pwrap->resetCalcs();
+    pindex->knnSearch(query, result_indices, dists, nn, SearchParams(-1));
+    system_clock::time_point qend = system_clock::now();
+    size_t dc = pwrap->getCalcs();
 
-    size_t dc = flann::L2<float>::distance_calcs;
-    cout << "Ending KNN, knn=" << nn <<", queries="<<query.rows <<" ,totalcalcs=" << dc<< ", avg=" << (float)dc / query.rows << endl;
+
+    printf("Ending KNN, buildtime=%ld, querytime=%ld, knn=%ld, queries=%ld, totalcalcs=%ld, avg=%f\n",
+           (end-start), (qend-end), nn, query.rows, dc, (float)dc / query.rows );
+
     /// cleanup
     delete[] result_indices.ptr();
     delete[] dists.ptr();
     return 0;
 }
 
-int calcRadiusDistCalculations(const Matrix<float>& dataset,const Matrix<float>& query, const float radius){
+int calcRadiusDistCalculations(IndexWrapper* pwrap,
+                               const Matrix<float>& dataset,
+                               const Matrix<float>& query,
+                               const float radius){
+    NNIndex *pindex = pwrap->pindex;
 
     vector< vector<size_t> > result_indices;
     vector< vector<float> > dists;
-//    Matrix<int> result_indices(new int[query.rows*nn], query.rows, nn);
-//    Matrix<float> dists(new float[query.rows*nn], query.rows , nn); /// distances of the knn results
 
-    KDTreeIndex<L2<float>> index(dataset, KDTreeIndexParams(1));
 
-    index.buildIndex();
-    // knn search 128 checks
-    flann::L2<float>::distance_calcs=0;
-    index.radiusSearch(query, result_indices, dists, radius, SearchParams(-1));
+    system_clock::time_point start = system_clock::now();
+    pindex->buildIndex();
+    system_clock::time_point end = system_clock::now();
+
+    pwrap->resetCalcs();
+    pindex->radiusSearch(query, result_indices, dists, radius, SearchParams(-1));
+    system_clock::time_point qend = system_clock::now();
 
     size_t nresults =0;
     for (size_t i = 0; i < result_indices.size(); ++i) {
         nresults += result_indices[i].size();
     }
-    size_t dc = flann::L2<float>::distance_calcs;
-    printf("radius%f, queries=%ld, totalcalcs=%ld, avg=%f, size=%zu, avgresults=%f\n",
+    size_t dc = pwrap->getCalcs();
+    printf("buildtime=%ld, querytime=%ld, radius%f, queries=%ld, totalcalcs=%ld, avg=%f, size=%zu, avgresults=%f\n",
+           (end - start),
+           (qend - end),
            radius,
            query.rows,
            dc ,
@@ -148,13 +192,27 @@ int run(int argc, char const * const argv[]) {
     srand(1);
     stringstream qss;
     qss << dir << "gaussian_query" << nclusters << "_" << dims << "_" << size << "." <<".hdf5";
-    if (index_type == KDTREE){
-        if (knn > 0){
-            calcKNNDistCalculations(dataset, query, (size_t) knn);
-        } else{
-            calcRadiusDistCalculations(dataset, query, radius);
-        }
+    IndexWrapper* pwrap = new IndexWrapper();
+    pwrap->type = index_type==KDTREE? KDTREE : LSH;
+    NNIndex* pindex;
+    switch(pwrap->type){
+        case KDTREE:
+            pindex = new KDTreeIndex<L2<float>>(dataset, KDTreeIndexParams(1));
+            break;
+        case LSH:
+            pindex = new flann::LshIndex(dataset, flann::LinearIndexParams());
+            break;
+        default:
+            break;
     }
+    pwrap->pindex = pindex;
+
+    if (knn > 0){
+        calcKNNDistCalculations(pwrap, dataset, query, (size_t) knn);
+    } else{
+        calcRadiusDistCalculations(pwrap, dataset, query, radius);
+    }
+
     printf("\n");
     delete[] query.ptr();
 
