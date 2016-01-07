@@ -7,6 +7,7 @@
 #include <fstream> //ifstream
 #include "vec2hdf5.h"
 #include "stats/fstat.h"
+#include "extras.h"
 #include <iterator>
 #include <unistd.h> //getopt
 
