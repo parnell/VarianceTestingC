@@ -15,7 +15,6 @@ Matrix<float> generateQuery(Matrix<float> matrix,size_t querySize);
 
 using namespace std;
 using namespace flann;
-using std::chrono::system_clock;
 
 
 enum IndexType{
@@ -80,13 +79,13 @@ int calcKNNDistCalculations(
     Matrix<int> result_indices(new int[query.rows*nn], query.rows, nn);
     Matrix<float> dists(new float[query.rows*nn], query.rows , nn); /// distances of the knn results
 
-    system_clock::time_point start = system_clock::now();
+    utime64 start = localClock();
     pindex->buildIndex();
-    system_clock::time_point end = system_clock::now();
+    utime64 end = localClock();
 
     pwrap->resetCalcs();
     pindex->knnSearch(query, result_indices, dists, nn, SearchParams(-1));
-    system_clock::time_point qend = system_clock::now();
+    utime64 qend = localClock();
     size_t dc = pwrap->getCalcs();
 
 
@@ -109,13 +108,13 @@ int calcRadiusDistCalculations(IndexWrapper* pwrap,
     vector< vector<float> > dists;
 
 
-    system_clock::time_point start = system_clock::now();
+    utime64 start = localClock();
     pindex->buildIndex();
-    system_clock::time_point end = system_clock::now();
+    utime64 end = localClock();
 
     pwrap->resetCalcs();
     pindex->radiusSearch(query, result_indices, dists, radius, SearchParams(-1));
-    system_clock::time_point qend = system_clock::now();
+    utime64 qend = localClock();
 
     size_t nresults =0;
     for (size_t i = 0; i < result_indices.size(); ++i) {
