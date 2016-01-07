@@ -1,17 +1,12 @@
 #include <iostream>
-#include <stdlib.h>     /* srand, rand */
 #include <vector>
 
 #include <flann/flann.hpp>
 #include <flann/io/hdf5.h>
-#include <fstream> //ifstream
 #include "vec2hdf5.h"
 #include "stats/fstat.h"
 #include "extras.h"
-#include <iterator>
-#include <unistd.h> //getopt
 
-Matrix<float> generateQuery(Matrix<float> matrix,size_t querySize);
 
 using namespace std;
 using namespace flann;
@@ -23,23 +18,6 @@ enum IndexType{
     LSH
 };
 
-
-void saveAsVec(Matrix<float> m, const char* fn){
-    ofstream of;
-    of.open(fn);
-    of << m.cols << " " << m.rows<< " " << " 2" << endl;
-    size_t i,j;
-    for (i = 0; i < m.rows; ++i) {
-        for (j = 0; j < m.cols; ++j) {
-            of << m[i][j];
-            if (j != m.cols-1) {
-                of << " ";
-            }
-        }
-        of << endl;
-    }
-    of.close();
-}
 
 struct IndexWrapper{
     NNIndex<L2<float>>* pindex;
@@ -65,11 +43,11 @@ struct IndexWrapper{
             default:
                 break;
         }
-        return -1;
+        return 0;
     }
 };
 
-int calcKNNDistCalculations(
+size_t calcKNNDistCalculations(
         IndexWrapper* pwrap,
         const Matrix<float>& dataset,
         const Matrix<float>& query,
@@ -90,9 +68,9 @@ int calcKNNDistCalculations(
 
 
     printf("Ending KNN, buildtime=%f, querytime=%f, avgquerytime=%f, knn=%ld, queries=%ld, totalcalcs=%ld, avg=%f\n",
-           (end - start)/1000000,
-           (qend - end)/1000000,
-           (qend - end)/1000000/query.rows,
+           (double)(end - start)/1000000,
+           (double)(qend - end)/1000000,
+           (double)(qend - end)/1000000/query.rows,
            nn, query.rows, dc, (float)dc / query.rows );
 
     /// cleanup
@@ -101,7 +79,7 @@ int calcKNNDistCalculations(
     return 0;
 }
 
-int calcRadiusDistCalculations(IndexWrapper* pwrap,
+size_t calcRadiusDistCalculations(IndexWrapper* pwrap,
                                const Matrix<float>& dataset,
                                const Matrix<float>& query,
                                const float radius){
@@ -125,9 +103,9 @@ int calcRadiusDistCalculations(IndexWrapper* pwrap,
     }
     size_t dc = pwrap->getCalcs();
     printf("buildtime=%f, querytime=%f, avgquerytime=%f, radius%f, queries=%ld, totalcalcs=%ld, avg=%f, size=%zu, avgresults=%f\n",
-           (end - start)/1000000,
-           (qend - end)/1000000,
-           (qend - end)/1000000/query.rows,
+           (double)(end - start)/1000000,
+           (double)(qend - end)/1000000,
+           (double)(qend - end)/1000000/query.rows,
            radius,
            query.rows,
            dc ,
@@ -146,7 +124,6 @@ int run(int argc, char const * const argv[]) {
     cout << endl;
     string filename;
     string queryFilename;
-//    bool saveFiles = false;
 
     float radius = 0.4;
     const char *indexName = 0;
@@ -198,7 +175,7 @@ int run(int argc, char const * const argv[]) {
     qss << dir << "gaussian_query" << nclusters << "_" << dims << "_" << size << "." <<".hdf5";
     IndexWrapper* pwrap = new IndexWrapper();
     pwrap->type = index_type==KDTREE? KDTREE : LSH;
-    NNIndex<L2<float> >* pindex;
+    NNIndex<L2<float> >* pindex =0;
     switch(pwrap->type){
         case KDTREE:
             pindex = new KDTreeIndex<L2<float>>(dataset, KDTreeIndexParams(1));
@@ -245,24 +222,12 @@ int main(int argc, char const * const argv[]) {
         fprintf(stderr, "need at least 2 arguments\n");
         fprintf(stderr, "example:  -k3 -d5 -i/Users/parnell/workspace/data/gaussian_1_5_0.1_1000000.hdf5 -ngauss -f1 \n");
     }
-
-
-//  argc=3; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian-20-10-1000000.txt", "/Users/parnell/workspace/data/gaussian-20-10-1000000.hdf5","gaussian"};
-//    argc=3; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian-1-10-1000000.vec", "/Users/parnell/workspace/data/gaussian-1-10-1000000.hdf5","gaussian"};
-//    argc=3; char const * const fakeArgs[] = {   "-i/Users/parnell/workspace/data/gaussian_1_5_0.4_1000000.hdf5",
-//                                    "-q/Users/parnell/workspace/data/gaussian_query_1_5_0.4_100.vec",
-//                                    "-ngaussian",
-//                                    "-r0.4"};
-//    return convert(argc, fakeArgs);
-//    argc = 6;  char const * const fakeArgs[] = {argv[0],"-k3", "-d5", iss.str().c_str(), "-ngauss", "-f1"};
-//    argc = 2; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian-1-10-1000000.hdf5", "gaussian"};
-//    char size[] = "1000000";
-//    std::stringstream sstm;
-//    sstm << "/Users/parnell/workspace/data/gaussian_1_5_0.1_" << size << ".hdf5";
-
-//    argc = 2; char * fakeArgs[] = {"/Users/parnell/workspace/data/gaussian_1_5_0.1_1000000.hdf5", "gauss"};
-
-//    return run(argc, fakeArgs);
-
     return run(argc, argv);
+
+
+//    argc=4; char const * const fakeArgs[] = {"",   "-i/Users/parnell/data/gaussian_nclus=5_dim=5_var=0.1_size=1000000.hdf5",
+//                                    "-q/Users/parnell/data/queries/gaussian-query-1_nclus=5_dim=5_var=0.1_size=1000000.hdf5",
+//                                    "-ngauss",
+//                                    "-r0.4"};
+//    return run(argc, fakeArgs);
 }
