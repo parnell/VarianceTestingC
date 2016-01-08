@@ -6,16 +6,28 @@
 #include "vec2hdf5.h"
 #include "stats/fstat.h"
 #include "extras.h"
+#include <signal.h>
+#include <unistd.h>
+#include <execinfo.h>
 
 
 using namespace std;
 using namespace flann;
 
+void handler(int sig) {
+    void *array[10];
+    int size = backtrace(array, 10);
+
+    fprintf(stderr, "Error: signal %d:\n", sig);
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+    exit(1);
+}
 
 enum IndexType{
     UNKNOWN,
     KDTREE,
-    LSH
+    LSH,
+    LAST_TYPE
 };
 
 
@@ -29,6 +41,7 @@ struct IndexWrapper{
                 flann::L2<float>::distance_calcs=0;
                 break;
             case LSH:
+                flann::L2<float>::distance_calcs=0;
                 break;
             default:
                 break;
@@ -39,7 +52,7 @@ struct IndexWrapper{
             case KDTREE:
                 return flann::L2<float>::distance_calcs;
             case LSH:
-                break;
+                return flann::L2<float>::distance_calcs;
             default:
                 break;
         }
@@ -116,6 +129,14 @@ size_t calcRadiusDistCalculations(IndexWrapper* pwrap,
 }
 
 
+string typeToString(IndexType type){
+    switch(type){
+        case KDTREE: return "kd-tree";
+        case LSH: return "lsh";
+        default: return "undefined";
+    }
+}
+
 int run(int argc, char const * const argv[]) {
     cout << "Starting argc=" << argc << endl;
     for (int k = 0; k < argc; ++k) {
@@ -129,16 +150,23 @@ int run(int argc, char const * const argv[]) {
     const char *indexName = 0;
     int c;
     int knn = -1;
-    int index_type = KDTREE;
+    IndexType index_type = KDTREE;
 
 
     int dims=-1;
     int nclusters = -1;
     int size = -1;
-    while((c =  getopt(argc, const_cast<char * const * >(argv), "rk:y:c:s:d:r:i:q:n:")) != EOF){
+    while((c =  getopt(argc, const_cast<char * const * >(argv), "k:y:c:s:d:r:i:q:n:")) != EOF){
         switch (c){
             case 'k': knn=atoi(optarg); break;
-            case 'y': index_type=atoi(optarg); break;
+            case 'y': {
+                int t = atoi(optarg);
+                if (t < 0 || t > IndexType::LAST_TYPE) {
+                    fprintf(stderr, "Index Type %d is not defined\n", t);
+                }
+                index_type = static_cast<IndexType>(t);
+            }
+                break;
             case 'i': filename = optarg; break;
             case 'q': queryFilename = optarg; break;
             case 'n': indexName= optarg; break;
@@ -153,8 +181,8 @@ int run(int argc, char const * const argv[]) {
         }
     }
 
-    printf("parms, dim=%d, nclusters=%d, size=%d, knn=%d, radius=%f, filename=%s, qfilename=%s\n",
-           dims, nclusters, size, knn, radius,filename.c_str(), queryFilename.c_str());
+    printf("parms, type=%s, dim=%d, nclusters=%d, size=%d, knn=%d, radius=%f, filename=%s, qfilename=%s\n",
+           typeToString(index_type).c_str(), dims, nclusters, size, knn, radius,filename.c_str(), queryFilename.c_str());
 
     Matrix<float> dataset;
     load_from_file(dataset, filename.c_str() , indexName);
@@ -168,13 +196,11 @@ int run(int argc, char const * const argv[]) {
     }
 
     printf("set,size=%ld, AverageVariance=%f, ", dataset.rows, stat.getAverageVariance());
-    string dir("/Users/parnell/workspace/data");
 
     srand(1);
-    stringstream qss;
-    qss << dir << "gaussian_query" << nclusters << "_" << dims << "_" << size << "." <<".hdf5";
+
     IndexWrapper* pwrap = new IndexWrapper();
-    pwrap->type = index_type==KDTREE? KDTREE : LSH;
+    pwrap->type = index_type;
     NNIndex<L2<float> >* pindex =0;
     switch(pwrap->type){
         case KDTREE:
@@ -204,30 +230,17 @@ int run(int argc, char const * const argv[]) {
 }
 
 int main(int argc, char const * const argv[]) {
-
-    stringstream ss;
-
-    string dir("/Users/parnell/workspace/data");
-    int nclusters = 1;
-    int dims = 5;
-    int size = 1000000;
-    float variance = 0.1;
-    ss << dir << "/gaussian_" << nclusters << "_" << dims << "_" << variance << "_" << size << ".hdf5";
-
-
-    stringstream iss;
-    iss << "-i" << ss.str();
-
-    if (argc < 3) {
-        fprintf(stderr, "need at least 2 arguments\n");
-        fprintf(stderr, "example:  -k3 -d5 -i/Users/parnell/workspace/data/gaussian_1_5_0.1_1000000.hdf5 -ngauss -f1 \n");
-    }
-    return run(argc, argv);
-
-
-//    argc=4; char const * const fakeArgs[] = {"",   "-i/Users/parnell/data/gaussian_nclus=5_dim=5_var=0.1_size=1000000.hdf5",
+    signal(SIGSEGV, handler);
+//    char const * const fakeArgs[] = {"",   "-i/Users/parnell/data/gaussian_nclus=5_dim=5_var=0.1_size=1000000.hdf5",
 //                                    "-q/Users/parnell/data/queries/gaussian-query-1_nclus=5_dim=5_var=0.1_size=1000000.hdf5",
 //                                    "-ngauss",
-//                                    "-r0.4"};
-//    return run(argc, fakeArgs);
+//                                    "-r0.4",
+//                                    "-y1"};
+//    argc = sizeof(fakeArgs)/sizeof(void*);
+    if (argc < 3) {
+        fprintf(stderr, "need at least 2 arguments\n");
+        fprintf(stderr,
+                "example:  -k3 -d5 -i/Users/parnell/workspace/data/gaussian_1_5_0.1_1000000.hdf5 -ngauss -f1 \n");
+    }
+    return run(argc, argv);
 }
