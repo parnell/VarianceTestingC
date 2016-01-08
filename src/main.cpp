@@ -241,6 +241,8 @@ int main(int argc, char const * const argv[]) {
         fprintf(stderr, "need at least 2 arguments\n");
         fprintf(stderr,
                 "example:  -k3 -d5 -i/Users/parnell/workspace/data/gaussian_1_5_0.1_1000000.hdf5 -ngauss -f1 \n");
+        return -1;
     }
     return run(argc, argv);
+//    return run(argc, fakeArgs);
 }
