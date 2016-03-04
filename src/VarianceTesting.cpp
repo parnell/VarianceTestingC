@@ -27,6 +27,7 @@ enum IndexType{
     UNKNOWN,
     KDTREE,
     LSH,
+    FLANN_LSH,
     LAST_TYPE
 };
 
@@ -206,7 +207,7 @@ int run(int argc, char const * const argv[]) {
         case KDTREE:
             pindex = new KDTreeIndex<L2<float>>(dataset, KDTreeIndexParams(1));
             break;
-        case LSH:
+        case FLANN_LSH:
             pindex = new flann::LshIndex<L2<float> >(dataset, flann::LinearIndexParams());
             break;
         default:
@@ -222,8 +223,6 @@ int run(int argc, char const * const argv[]) {
 
     printf("\n");
     delete[] query.ptr();
-
-
     delete[] dataset.ptr();
 
     return 0;
