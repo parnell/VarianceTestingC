@@ -34,35 +34,39 @@ int main(int argc, char *argv[])
     }
     unsigned K = 100, Q = 1000, seed = 0;
     lshbox::timer timer;
-    std::cout << "CREATE BENCHMARK FOR DATA ..." << std::endl;
     timer.restart();
 
     std::string file(argv[1]);
     std::string query_file(argv[2]);
-    K = atoi(argv[3]);
-    Q = atoi(argv[4]);
+    K = (unsigned) atoi(argv[3]);
+    Q = (unsigned) atoi(argv[4]);
+    std::cout << "CREATE BENCHMARK FOR DATA " << argv[1] << "  output=" << argv[2] <<
+            "  k=" << K << " Q=" << Q <<std::endl;
     lshbox::Matrix<float> data(file);
 
     lshbox::Benchmark bench;
-    bench.init(Q, K, data.getSize(), seed);
+    bench.init(Q, K, (unsigned) data.getSize(), seed);
 
-    lshbox::Metric<float> metric(data.getDim(), L2_DIST);
+    lshbox::Metric<float> metric((unsigned) data.getDim(), L2_DIST);
     lshbox::progress_display pd(Q);
     for (unsigned i = 0; i != Q; ++i)
     {
+        lshbox::timer timer2;
+        timer2.restart();
+
         unsigned q = bench.getQuery(i);
         lshbox::Topk &topk = bench.getAnswer(i);
         for (unsigned j = 0; j != data.getSize(); ++j)
         {
-            if (q == j)
-            {
-                continue;
-            }
+            if (q == j) {
+                continue; }
             topk.push(j, metric.dist(data[q], data[j]));
         }
         topk.genTopk();
         ++pd;
+        std::cout << "\nquery=" << i<< " , time=" << timer2.elapsed() << " (s)." << std::endl;
     }
     bench.save(query_file);
-    std::cout << "MEAN QUERY TIME: " << timer.elapsed() / Q << "s." << std::endl;
+    double total_time = timer.elapsed();
+    std::cout << "time mean=" << total_time / Q << " (s). total="<<total_time << std::endl;
 }

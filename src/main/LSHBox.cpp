@@ -5,7 +5,7 @@ using std::string;
 
 int main(int argc, char const *argv[])
 {
-    if (argc != 4)
+    if (argc != 5)
     {
         std::cerr << "Usage: ./itqlsh_test <input file> <index outfile> <benchmark file> <k>" << std::endl;
         return -1;
@@ -14,13 +14,14 @@ int main(int argc, char const *argv[])
     string lsh_file(argv[2]);
     string benchmark_file(argv[3]);
     int k = atoi(argv[4]);
-
+    std::cout << "Running lsh for " << argv[1] << "  output=" << argv[2] <<
+    "  benchmark=" << argv[3] << " K=" << k <<std::endl;
     std::cout << "Using Iterative Quantization" << std::endl << std::endl;
     typedef float DATATYPE;
     std::cout << "LOADING DATA ..." << std::endl;
     lshbox::timer timer;
     lshbox::Matrix<DATATYPE> data(data_file);
-    std::cout << "LOAD TIME: " << timer.elapsed() << "s." << std::endl;
+    std::cout << "LOAD TIME: " << timer.elapsed() << " (s) << size=" << data.getSize() << ", dim=" << data.getDim() <<std::endl;
     std::cout << "CONSTRUCTING INDEX ..." << std::endl;
     timer.restart();
     std::string file(lsh_file);
@@ -33,12 +34,13 @@ int main(int argc, char const *argv[])
     else
     {
         lshbox::itqLsh<DATATYPE>::Parameter param;
-        param.M = 521;
-        param.L = 5;
-        param.D = data.getDim();
-        param.N = 8;
-        param.S = 100;
-        param.I = 50;
+        param.M = 500; ///(521) Hash table size
+        param.L = 5; /// Number of hash tables
+        param.D = (unsigned) data.getDim();
+        param.N = 2; /// Binary code bytes, (has to be less than D)
+        assert (param.N <= param.D);
+        param.S = 100; /// Size of vectors in train
+        param.I = 50; /// Training iterations
         mylsh.reset(param);
         mylsh.train(data);
     }
@@ -47,7 +49,7 @@ int main(int argc, char const *argv[])
     std::cout << "LOADING BENCHMARK ..." << std::endl;
     timer.restart();
     lshbox::Matrix<DATATYPE>::Accessor accessor(data);
-    lshbox::Metric<DATATYPE> metric(data.getDim(), L1_DIST);
+    lshbox::Metric<DATATYPE> metric((unsigned)data.getDim(), L1_DIST);
     lshbox::Benchmark bench;
     std::string benchmark(benchmark_file);
     bench.load(benchmark);
