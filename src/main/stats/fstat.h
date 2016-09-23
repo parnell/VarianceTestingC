@@ -17,7 +17,7 @@ public:
     float stat[4];
     bool dirty;
     float var;
-    float mean;
+
     fstat() : dirty(true), count(0), stat{0,0,FLT_MAX,FLT_MIN}{
 
     }
@@ -36,7 +36,7 @@ public:
     }
 
     float getDeviation(){
-        return (1.0/count) * std::sqrt(count*stat[1]- stat[0]*stat[0]);
+        return (float) (1.0/count) * std::sqrt(count*stat[1]- stat[0]*stat[0]);
     }
 
     float getVariance(){

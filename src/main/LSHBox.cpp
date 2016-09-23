@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
     std::cout << "LOADING DATA ..." << std::endl;
     lshbox::timer timer;
     lshbox::Matrix<DATATYPE> data(data_file);
-    std::cout << "LOAD TIME: " << timer.elapsed() << " (s) << size=" << data.getSize() << ", dim=" << data.getDim() <<std::endl;
+    std::cout << "loadtime= " << timer.elapsed() << " (s) << size=" << data.getSize() << ", dim=" << data.getDim() <<std::endl;
     std::cout << "CONSTRUCTING INDEX ..." << std::endl;
     timer.restart();
     std::string file(lsh_file);
@@ -45,7 +45,7 @@ int main(int argc, char const *argv[])
         mylsh.train(data);
     }
     mylsh.save(file);
-    std::cout << "CONSTRUCTING TIME: " << timer.elapsed() << "s." << std::endl;
+    std::cout << "buildtime= " << timer.elapsed() << "s." << std::endl;
     std::cout << "LOADING BENCHMARK ..." << std::endl;
     timer.restart();
     lshbox::Matrix<DATATYPE>::Accessor accessor(data);
@@ -59,8 +59,8 @@ int main(int argc, char const *argv[])
             metric,
             K
     );
-    std::cout << "LOADING TIME: " << timer.elapsed() << "s." << std::endl;
-    std::cout << "RUNING QUERY ..." << std::endl;
+    std::cout << "loadbenchmarktime= " << timer.elapsed() << "s." << std::endl;
+    std::cout << "RUNNING QUERY ..." << std::endl;
     timer.restart();
     lshbox::Stat cost, recall, precision;
     lshbox::progress_display pd(bench.getQ());
@@ -74,12 +74,13 @@ int main(int argc, char const *argv[])
         cost << float(scanner.cnt()) / float(data.getSize());
         ++pd;
     }
-    std::cout << "MEAN QUERY TIME: " << timer.elapsed() / bench.getQ() << "s." << std::endl;
-    std::cout << "RECALL   : " << recall.getAvg() << " +/- " << recall.getStd() << std::endl;
-    std::cout << "PRECISION: " << recall.getAvg() << " +/- " << recall.getStd() << std::endl;
-    std::cout << "COST     : " << cost.getAvg() << " +/- " << cost.getStd() << std::endl;
-    std::cout << "Distance Calcs     : " << mylsh.scalcs.getSum() << "   avg="<<
+    std::cout << "meanquerytime= " << timer.elapsed() / bench.getQ() << "s." << std::endl;
+    std::cout << "RECALL   = " << recall.getAvg() << " +/- " << recall.getStd() << std::endl;
+    std::cout << "PRECISION= " << recall.getAvg() << " +/- " << recall.getStd() << std::endl;
+    std::cout << "COST     = " << cost.getAvg() << " +/- " << cost.getStd() << std::endl;
+    std::cout << "totaldcalcs=" << mylsh.scalcs.getSum() << "   , avg="<<
             mylsh.scalcs.getAvg() << " +/- " << mylsh.scalcs.getStd() << std::endl;
+
 
     // scanner.reset(data[0]);
     // mylsh.query(data[0], scanner);

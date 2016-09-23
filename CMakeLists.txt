@@ -18,10 +18,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(PROGRAMS VarianceTesting CreateLSHBenchmark vec2bin vec2hdf5 LSHBox)
 
-set(SOURCE_FILES src/vec2hdf5.h src/stats/fstat.cpp src/stats/fstat.h src/extras.h src/vec2bin.h)
+set(SOURCE_FILES src/main/vec2hdf5.h src/main/stats/fstat.cpp src/main/stats/fstat.h src/main/extras.h src/main/vec2bin.h src/test/TestLSH.cpp src/test/TestLSH.h)
 
 foreach(program ${PROGRAMS})
-    add_executable(${program} ${SOURCE_FILES} src/${program}.cpp)
+    add_executable(${program} ${SOURCE_FILES} src/main/${program}.cpp)
     target_link_libraries( ${program} ${_hdf5_libs})
 endforeach(program)
 

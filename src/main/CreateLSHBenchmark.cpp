@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 
     lshbox::Metric<float> metric((unsigned) data.getDim(), L2_DIST);
     lshbox::progress_display pd(Q);
+    fstat qdistances, distances;
     for (unsigned i = 0; i != Q; ++i)
     {
         lshbox::timer timer2;
@@ -60,13 +61,21 @@ int main(int argc, char *argv[])
         {
             if (q == j) {
                 continue; }
-            topk.push(j, metric.dist(data[q], data[j]));
+            float distance = metric.dist(data[q], data[j]);
+            topk.push(j, distance);
+            distances.addStat(distance);
         }
         topk.genTopk();
+        std::vector<std::pair<float, unsigned> >& tops = topk.getTopk();
+        for (auto e : tops){
+            qdistances.addStat(e.first);
+        }
         ++pd;
         std::cout << "\nquery=" << i<< " , time=" << timer2.elapsed() << " (s)." << std::endl;
     }
     bench.save(query_file);
     double total_time = timer.elapsed();
-    std::cout << "time mean=" << total_time / Q << " (s). total="<<total_time << std::endl;
+    std::cout << "meantime=" << total_time / Q << " (s), totaltime="<<total_time << ", topkmeandist=" << qdistances.getMean() <<
+            " , meandist=" << distances.getMean() <<
+            std::endl;
 }
