@@ -67,7 +67,7 @@ size_t calcKNNDistCalculations(
         const Matrix<float>& query,
         const size_t nn){
     NNIndex<L2<float>> *pindex = pwrap->pindex;
-
+    printf("\nquery rows = %ld, query cols=%ld,  nn=%ld , veclen=%ld\n", query.rows, query.cols, nn, pindex->veclen());
     Matrix<int> result_indices(new int[query.rows*nn], query.rows, nn);
     Matrix<float> dists(new float[query.rows*nn], query.rows , nn); /// distances of the knn results
 
@@ -148,7 +148,7 @@ int run(int argc, char const * const argv[]) {
     string queryFilename;
 
     float radius = 0.4;
-    const char *indexName = 0;
+    string indexName = "data";
     int c;
     int knn = -1;
     IndexType index_type = KDTREE;
@@ -181,16 +181,21 @@ int run(int argc, char const * const argv[]) {
             default: break;
         }
     }
+    if (queryFilename.empty() || filename.empty()){
+        printf("query filename or filename was empty");
+        printf("filename: '%s'  queryfilename: '%s'", filename.c_str(), queryFilename.c_str());
+        return -1;
+    }
 
     printf("parms, type=%s, dim=%d, nclusters=%d, size=%d, knn=%d, radius=%f, filename=%s, qfilename=%s\n",
            typeToString(index_type).c_str(), dims, nclusters, size, knn, radius,filename.c_str(), queryFilename.c_str());
 
     Matrix<float> dataset;
-    load_from_file(dataset, filename.c_str() , indexName);
+    load_from_file(dataset, filename , indexName);
 
     Matrix<float> query;
-    load_from_file(query, queryFilename.c_str() , indexName);
-
+    load_from_file(query, queryFilename, indexName);
+    printf("loaded queryfile qs=%ld  cols=%ld\n", query.rows, query.cols);
     mstat stat(dataset.rows, dataset.cols, dataset.ptr());
     for (size_t j = 0; j < dataset.cols; ++j) {
         printf("coord,dim=%ld, mean=%f, variance=%f\n", j, stat[j]->getMean(), stat[j]->getVariance());

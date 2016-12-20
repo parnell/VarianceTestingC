@@ -1,21 +1,30 @@
 #include <string>
 
 #include <lshbox.h>
+#include <fstream>
+#include <stdlib.h>
+
 using std::string;
+
+#include "createTopK.h"
 
 int main(int argc, char const *argv[])
 {
-    if (argc != 5)
+    if (argc < 5)
     {
-        std::cerr << "Usage: ./itqlsh_test <input file> <index outfile> <benchmark file> <k>" << std::endl;
+        std::cerr << "Usage: ./itqlsh_test <input file> <index outfile> <benchmark file> <k> [output query file]" << std::endl;
         return -1;
     }
     string data_file(argv[1]);
     string lsh_file(argv[2]);
     string benchmark_file(argv[3]);
     int k = atoi(argv[4]);
+    string query_file;
+    if (argc >= 6){
+        query_file = argv[5];
+    }
     std::cout << "Running lsh for " << argv[1] << "  output=" << argv[2] <<
-    "  benchmark=" << argv[3] << " K=" << k <<std::endl;
+        "  benchmark=" << argv[3] << " K=" << k <<std::endl;
     std::cout << "Using Iterative Quantization" << std::endl << std::endl;
     typedef float DATATYPE;
     std::cout << "LOADING DATA ..." << std::endl;
@@ -60,9 +69,27 @@ int main(int argc, char const *argv[])
             K
     );
     std::cout << "loadbenchmarktime= " << timer.elapsed() << "s." << std::endl;
+    if (!query_file.empty()){
+        std::ofstream ofs (query_file, std::ofstream::out);
+        ofs << data.getDim() << " " << bench.getQ() << " 2" << std::endl;
+        for (unsigned i = 0; i != bench.getQ(); ++i) {
+            unsigned q = bench.getQuery(i);
+            for (unsigned j = 0; j != data.getDim(); ++j){
+                ofs << data[q][j];
+                if (j!=K-1){
+                    ofs << " ";
+                }
+            }
+            ofs << std::endl;
+        }
+        ofs.close();
+    }
+
     std::cout << "RUNNING QUERY ..." << std::endl;
     timer.restart();
     lshbox::Stat cost, recall, precision;
+    lshbox::Stat scalcs;
+
     lshbox::progress_display pd(bench.getQ());
     for (unsigned i = 0; i != bench.getQ(); ++i)
     {
@@ -73,13 +100,14 @@ int main(int argc, char const *argv[])
         recall << bench.getAnswer(i).precision(scanner.topk());
         cost << float(scanner.cnt()) / float(data.getSize());
         ++pd;
+        scalcs.append(scanner.cnt());
     }
     std::cout << "meanquerytime= " << timer.elapsed() / bench.getQ() << "s." << std::endl;
     std::cout << "RECALL   = " << recall.getAvg() << " +/- " << recall.getStd() << std::endl;
     std::cout << "PRECISION= " << recall.getAvg() << " +/- " << recall.getStd() << std::endl;
     std::cout << "COST     = " << cost.getAvg() << " +/- " << cost.getStd() << std::endl;
-    std::cout << "totaldcalcs=" << mylsh.scalcs.getSum() << "   , avg="<<
-            mylsh.scalcs.getAvg() << " +/- " << mylsh.scalcs.getStd() << std::endl;
+    std::cout << "totaldcalcs=" << scalcs.getSum() << "   , avg="<<
+            scalcs.getAvg() << " +/- " << scalcs.getStd() << std::endl;
 
 
     // scanner.reset(data[0]);
