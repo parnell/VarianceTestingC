@@ -7,7 +7,7 @@ find_package (HDF5)
 include_directories(${HDF5_INCLUDE_DIRS})
 set(_hdf5_libs hdf5 hdf5_cpp)
 
-include_directories(/Users/parnell/src/LSHBOX/include)
+include_directories($ENV{HOME}/src/LSHBOX/include)
 
 
 link_directories(/usr/local/include/flann)
