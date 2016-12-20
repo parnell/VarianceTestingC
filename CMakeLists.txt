@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(VarianceTesting)
 
+set(TTYPE "TACC")
 
 find_package (HDF5)
 
@@ -9,10 +10,13 @@ set(_hdf5_libs hdf5 hdf5_cpp)
 
 include_directories($ENV{HOME}/src/LSHBOX/include)
 
-
 link_directories(/usr/local/include/flann)
-link_directories(/usr/local/Cellar/hdf5/1.8.16/lib)
-link_directories(/Users/parnell/src/LSHBOX/include)
+if("${TTYPE}" STREQUAL "TACC")
+	link_directories($ENV{TACC_HDF5_LIB})
+else()
+	link_directories(/usr/local/Cellar/hdf5/1.8.16/lib)
+	link_directories(/Users/parnell/src/LSHBOX/include)
+endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
