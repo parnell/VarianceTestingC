@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.3)
 project(VarianceTesting)
 
 set(TTYPE "TACC")
-
+message("Running cmake with target type ${TTYPE}")
 find_package (HDF5)
 
 include_directories(${HDF5_INCLUDE_DIRS})
