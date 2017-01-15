@@ -23,7 +23,7 @@ set(SOURCE_FILES src/main/vec2hdf5.h src/main/stats/fstat.cpp src/main/stats/fst
         src/main/extras.h src/main/vec2bin.h src/main/vec2vect.h src/test/TestLSH.cpp
         src/test/TestLSH.h src/main/createTopK.cpp src/main/createTopK.h )
 
-set(NOHDF5SOURCE_FILES src/main/verifylshbin.h src/main/bin2vec.h)
+set(NOHDF5SOURCE_FILES src/main/verifylshbin.h src/main/bin2vec.h src/main/flann_dist_revised.h.h)
 
 foreach(program ${PROGRAMS})
     add_executable(${program} ${SOURCE_FILES} src/main/${program}.cpp)
