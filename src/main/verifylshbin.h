@@ -1,0 +1,14 @@
+//
+//
+//
+
+#ifndef VARIANCETESTING_VERIFYBIN_H
+#define VARIANCETESTING_VERIFYBIN_H
+
+
+class verifylshbin {
+
+};
+
+
+#endif //VARIANCETESTING_VERIFYBIN_H

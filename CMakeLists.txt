@@ -17,14 +17,21 @@ link_directories(/Users/parnell/src/LSHBOX/include)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(PROGRAMS VarianceTesting CreateLSHBenchmark vec2bin vec2hdf5 vec2vect LSHBox)
+set(NOHDF5PROGRAMS verifylshbin bin2vec)
 
 set(SOURCE_FILES src/main/vec2hdf5.h src/main/stats/fstat.cpp src/main/stats/fstat.h
         src/main/extras.h src/main/vec2bin.h src/main/vec2vect.h src/test/TestLSH.cpp
-        src/test/TestLSH.h src/main/createTopK.cpp src/main/createTopK.h)
+        src/test/TestLSH.h src/main/createTopK.cpp src/main/createTopK.h )
+
+set(NOHDF5SOURCE_FILES src/main/verifylshbin.h src/main/bin2vec.h)
 
 foreach(program ${PROGRAMS})
     add_executable(${program} ${SOURCE_FILES} src/main/${program}.cpp)
     target_link_libraries( ${program} ${_hdf5_libs})
+endforeach(program)
+
+foreach(program ${NOHDF5PROGRAMS})
+    add_executable(${program} ${NOHDF5SOURCE_FILES} src/main/${program}.cpp)
 endforeach(program)
 
 #
