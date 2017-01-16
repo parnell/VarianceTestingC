@@ -85,7 +85,7 @@ size_t calcKNNDistCalculations(
            (double)(end - start)/1000000,
            (double)(qend - end)/1000000,
            (double)(qend - end)/1000000/query.rows,
-           nn, query.rows, dc, (float)dc / query.rows, (float)dc / pindex->size());
+           nn, query.rows, dc, (float)dc / query.rows, ((float)dc / pindex->size())/100 );
 
     /// cleanup
     delete[] result_indices.ptr();
