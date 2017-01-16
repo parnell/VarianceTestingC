@@ -79,13 +79,13 @@ size_t calcKNNDistCalculations(
     pindex->knnSearch(query, result_indices, dists, nn, SearchParams(-1));
     utime64 qend = localClock();
     size_t dc = pwrap->getCalcs();
-
+    float avg = (float)dc/ query.rows;
 
     printf("Ending KNN\t buildtime=%f\t querytime=%f\t avgquerytime=%f\t knn=%ld\t queries=%ld\t totalcalcs=%ld\t avg=%f\t cost=%f\n",
            (double)(end - start)/1000000,
            (double)(qend - end)/1000000,
            (double)(qend - end)/1000000/query.rows,
-           nn, query.rows, dc, (float)dc / query.rows, ((float)dc/ query.rows / pindex->size())/100 );
+           nn, query.rows, dc, avg, avg / pindex->size() );
 
     /// cleanup
     delete[] result_indices.ptr();
