@@ -81,11 +81,11 @@ size_t calcKNNDistCalculations(
     size_t dc = pwrap->getCalcs();
 
 
-    printf("Ending KNN, buildtime=%f, querytime=%f, avgquerytime=%f, knn=%ld, queries=%ld, totalcalcs=%ld, avg=%f\n",
+    printf("Ending KNN\t buildtime=%f\t querytime=%f\t avgquerytime=%f\t knn=%ld\t queries=%ld\t totalcalcs=%ld\t avg=%f\t cost=%f\n",
            (double)(end - start)/1000000,
            (double)(qend - end)/1000000,
            (double)(qend - end)/1000000/query.rows,
-           nn, query.rows, dc, (float)dc / query.rows );
+           nn, query.rows, dc, (float)dc / query.rows, (float)dc / pindex->size());
 
     /// cleanup
     delete[] result_indices.ptr();
@@ -195,13 +195,13 @@ int run(int argc, char const * const argv[]) {
 
     Matrix<float> query;
     load_from_file(query, queryFilename, indexName);
-    printf("loaded queryfile qs=%ld  cols=%ld\n", query.rows, query.cols);
+    printf("loaded queryfile qs=%ld \tcols=%ld\n", query.rows, query.cols);
     mstat stat(dataset.rows, dataset.cols, dataset.ptr());
     for (size_t j = 0; j < dataset.cols; ++j) {
-        printf("coord,dim=%ld, mean=%f, variance=%f\n", j, stat[j]->getMean(), stat[j]->getVariance());
+        printf("coord,dim=%ld\t mean=%f\t variance=%f\n", j, stat[j]->getMean(), stat[j]->getVariance());
     }
 
-    printf("set,size=%ld, AverageVariance=%f, ", dataset.rows, stat.getAverageVariance());
+    printf("set\tsize=%ld\t AverageVariance=%f\t ", dataset.rows, stat.getAverageVariance());
 
     srand(1);
 
