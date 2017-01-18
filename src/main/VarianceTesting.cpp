@@ -82,7 +82,7 @@ size_t calcKNNDistCalculations(
 //    size_t dc = pwrap->getCalcs();
     size_t dc = flann::L2<float>::fcalcs;
     float avg = (float)dc/ query.rows;
-//    printf("%ld\t%ld\t%ld\n", flann::L2<float>::distance_calcs, flann::L2<float>::fcalcs, flann::L2<float>::acalcs);
+    printf("%ld\t%ld\t%ld\n", flann::L2<float>::distance_calcs, flann::L2<float>::fcalcs, flann::L2<float>::acalcs);
     printf("Ending KNN\t buildtime=%f\t querytime=%f\t avgquerytime=%f\t knn=%ld\t queries=%ld\t totalcalcs=%ld\t avg=%f\t cost=%f\n",
            (double)(end - start)/1000000,
            (double)(qend - end)/1000000,

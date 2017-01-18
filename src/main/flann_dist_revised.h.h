@@ -146,6 +146,8 @@ namespace flann
     struct L2
     {
         static size_t distance_calcs; ///parnell change
+        static size_t fcalcs; ///parnell change
+        static size_t acalcs; ///parnell change
 
         typedef bool is_kdtree_distance;
 
@@ -189,7 +191,7 @@ namespace flann
                 result += diff0 * diff0;
             }
             ++distance_calcs; // parnell change
-
+            ++fcalcs;
             return result;
         }
 
@@ -203,10 +205,13 @@ namespace flann
         inline ResultType accum_dist(const U& a, const V& b, int) const
         {
             ++distance_calcs; // parnell change
+            ++acalcs;
             return (a-b)*(a-b);
         }
     };
     template<class T> size_t L2<T>::distance_calcs;
+    template<class T> size_t L2<T>::fcalcs;
+    template<class T> size_t L2<T>::acalcs;
 
 /*
  * Manhattan distance functor, optimized version
