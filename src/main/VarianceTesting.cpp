@@ -8,6 +8,7 @@
 #include "extras.h"
 #include <unistd.h>
 #include <execinfo.h>
+#include <signal.h>
 
 
 using namespace std;
