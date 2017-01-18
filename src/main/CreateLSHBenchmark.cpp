@@ -64,6 +64,7 @@ int main(int argc, char** argv)
     fstat qdistances, distances;
     for (unsigned i = 0; i != Q; ++i)
     {
+        fstat dist, tkdist;
         lshbox::timer timer2;
         timer2.restart();
 
@@ -76,14 +77,17 @@ int main(int argc, char** argv)
             float distance = metric.dist(data[q], data[j]);
             topk.push(j, distance);
             distances.addStat(distance);
+            dist.addStat(distance);
         }
         topk.genTopk();
         std::vector<std::pair<float, unsigned> >& tops = topk.getTopk();
         for (auto e : tops){
             qdistances.addStat(e.first);
+            tkdist.addStat(e.first);
         }
         ++pd;
-        std::cout << "\nquery=" << i<< "\t time=" << timer2.elapsed() << " (s)." << std::endl;
+        std::cout << "\nquery=" << i<< "\t time=" << timer2.elapsed() << " (s).\tquerytopkmeandist=" <<
+            tkdist.getMean() <<"\tquerymeandist=" << dist.getMean() << std::endl;
     }
     bench.save(bench_file);
     double total_time = timer.elapsed();
@@ -93,7 +97,7 @@ int main(int argc, char** argv)
     std::cout << "loadbenchmarktime= " << timer.elapsed() << " (s)" << std::endl;
     const size_t dim = (size_t) data.getDim();
     if (!query_file.empty()){
-        std::cout << "#Creating Query File" << std::endl;
+        std::cout << "#Creating Query File " << query_file <<  std::endl;
 
         std::ofstream ofs (query_file, std::ofstream::out);
         ofs << data.getDim() << ' ' << bench.getQ() << " 2" << std::endl;
@@ -111,7 +115,7 @@ int main(int argc, char** argv)
     }
 
     if (!msquery_file.empty()){
-        std::cout << "#Creating MS Query File" << std::endl;
+        std::cout << "#Creating MS Query File " << msquery_file << std::endl;
 
         std::ofstream ofs (msquery_file, std::ofstream::out);
         for (unsigned i = 0; i != bench.getQ(); ++i) {
