@@ -153,6 +153,13 @@ public:
     }
 };
 
+void build(){
+
+}
+
+void query(){
+
+}
 
 int main(int argc, char *argv[])
 {
@@ -171,7 +178,7 @@ int main(int argc, char *argv[])
     int I = 50; /// Training iterations
     int N = -1; /// Binary code bytes
 
-    while((c =  getopt(argc, argv, "i:x:b:q:t:K:M:L:S:I:N:hu")) != EOF){
+    while((c =  getopt(argc, argv, "i:x:b:q:t:K:M:L:S:I:N:hu:")) != EOF){
         switch (c){
             case 'i': data_file = optarg; break;
             case 'x': lsh_file= optarg; break;
@@ -227,6 +234,7 @@ int main(int argc, char *argv[])
         wrapper.setParams(data);
         wrapper.save(file);
         std::cout << "buildtime= " << timer.elapsed() << " (s)" << std::endl;
+        return 0;
     }
 
     std::cout << "#LOADING BENCHMARK ..." << std::endl;

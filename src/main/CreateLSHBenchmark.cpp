@@ -5,28 +5,53 @@
 #include "vec2hdf5.h"
 #include "stats/fstat.h"
 #include <lshbox.h>
+#include <unistd.h>
 
 
-using namespace std;
+
+
 using namespace flann;
 
 
-int main(int argc, char *argv[])
+int main(int argc, char** argv)
 {
-    if (argc != 6)
+    if (argc < 6)
     {
-        std::cerr << "Usage: ./CreateLSHBenchmark <input file> <output file> <k> <# queries> <output query file>" << std::endl;
+        std::cerr << "Usage: ./CreateLSHBenchmark <input file> <output file> "
+                << "<k> <# queries> <fold> -V <output vec query file> -M <output ms query file -r or -k needed > " << std::endl;
         return -1;
     }
-    unsigned K = 100, Q = 1000, seed = 0;
-    lshbox::timer timer;
-    timer.restart();
+    int c;
 
     std::string file(argv[1]);
     std::string bench_file(argv[2]);
-    K = (unsigned) atoi(argv[3]);
-    Q = (unsigned) atoi(argv[4]);
-    std::string query_file(argv[5]);
+    unsigned K = (unsigned) atoi(argv[3]);
+    unsigned Q = (unsigned) atoi(argv[4]);
+    unsigned seed = (unsigned) atoi(argv[5]);
+
+    std::string query_file = argv[7];
+    std::string msquery_file = argv[9];
+
+    int msK = atoi(argv[11]);
+    double msR = 0.0f;
+
+    /// no idea why getopt is always returning -1
+    while ((c = getopt(argc, const_cast<char * const * >(argv), "V:M:r:k:")) != EOF){
+        switch (c){
+            case 'V': query_file = optarg; break;
+            case 'M': msquery_file = optarg; break;
+            case 'r': msR = atof(optarg); break;
+            case 'k': msK = atoi(optarg); break;
+            case ':': /// No operand
+                fprintf(stderr,"Option -%c requires an operand\n", optopt);
+                return -1;
+            default: break;
+        }
+    }
+
+    lshbox::timer timer;
+    timer.restart();
+
     std::cout << "CREATE BENCHMARK FOR DATA=" << argv[1] << "  output=" << argv[2] <<
             "\tk=" << K << "\tQ=" << Q << "\tqueryfile=" << argv[5] <<std::endl;
     lshbox::Matrix<float> data(file);
@@ -66,22 +91,47 @@ int main(int argc, char *argv[])
             "\t meandist=" << distances.getMean() << std::endl;
 
     std::cout << "loadbenchmarktime= " << timer.elapsed() << " (s)" << std::endl;
-
+    const size_t dim = (size_t) data.getDim();
     if (!query_file.empty()){
         std::cout << "#Creating Query File" << std::endl;
 
         std::ofstream ofs (query_file, std::ofstream::out);
-        ofs << data.getDim() << " " << bench.getQ() << " 2" << std::endl;
+        ofs << data.getDim() << ' ' << bench.getQ() << " 2" << std::endl;
         for (unsigned i = 0; i != bench.getQ(); ++i) {
             unsigned q = bench.getQuery(i);
-            for (unsigned j = 0; j != data.getDim(); ++j){
+            for (unsigned j = 0; j != dim; ++j){
                 ofs << data[q][j];
-                if (j!=K-1){
-                    ofs << " ";
+                if (j!=dim-1){
+                    ofs << ' ';
                 }
             }
             ofs << std::endl;
         }
+        ofs.close();
+    }
+
+    if (!msquery_file.empty()){
+        std::cout << "#Creating MS Query File" << std::endl;
+
+        std::ofstream ofs (msquery_file, std::ofstream::out);
+        for (unsigned i = 0; i != bench.getQ(); ++i) {
+            unsigned q = bench.getQuery(i);
+            for (unsigned j = 0; j != dim; ++j){
+                if (j==0){
+                    if (msK > 0){
+                        ofs << -msK << ',';
+                    } else {
+                        ofs << msR << ',';
+                    }
+                }
+                ofs << data[q][j];
+                if (j!=dim-1){
+                    ofs << ',';
+                }
+            }
+            ofs << std::endl;
+        }
+        ofs << "-0" << std::endl;
         ofs.close();
     }
 

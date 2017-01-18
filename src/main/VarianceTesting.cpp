@@ -6,7 +6,6 @@
 #include "vec2hdf5.h"
 #include "stats/fstat.h"
 #include "extras.h"
-#include <signal.h>
 #include <unistd.h>
 #include <execinfo.h>
 
@@ -76,11 +75,14 @@ size_t calcKNNDistCalculations(
     utime64 end = localClock();
 
     pwrap->resetCalcs();
+    flann::L2<float>::fcalcs = 0;
+            flann::L2<float>::acalcs = 0;
     pindex->knnSearch(query, result_indices, dists, nn, SearchParams(-1));
     utime64 qend = localClock();
-    size_t dc = pwrap->getCalcs();
+//    size_t dc = pwrap->getCalcs();
+    size_t dc = flann::L2<float>::fcalcs;
     float avg = (float)dc/ query.rows;
-
+//    printf("%ld\t%ld\t%ld\n", flann::L2<float>::distance_calcs, flann::L2<float>::fcalcs, flann::L2<float>::acalcs);
     printf("Ending KNN\t buildtime=%f\t querytime=%f\t avgquerytime=%f\t knn=%ld\t queries=%ld\t totalcalcs=%ld\t avg=%f\t cost=%f\n",
            (double)(end - start)/1000000,
            (double)(qend - end)/1000000,
